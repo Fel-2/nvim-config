@@ -30,7 +30,7 @@ A modern Neovim configuration based on Kickstart.nvim with AI assistance (Copilo
 
 2. Clone this repo:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/nvim-config.git ~/.config/nvim
+   git clone https://github.com/Fel-2/nvim-config.git ~/.config/nvim
    ```
 
 3. Start Neovim:
