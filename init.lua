@@ -70,10 +70,11 @@ vim.opt.rtp:prepend(lazypath)
 
 -- Plugins
 require('lazy').setup({
-  { 'NMAC427/guess-indent.nvim', opts = {} },
+  { 'NMAC427/guess-indent.nvim', event = 'BufReadPost', opts = {} },
 
   {
     'lewis6991/gitsigns.nvim',
+    event = { 'BufReadPre', 'BufNewFile' },
     opts = {
       signs = {
         add = { text = '+' },
@@ -93,7 +94,8 @@ require('lazy').setup({
       icons = { mappings = vim.g.have_nerd_font },
       spec = {
         { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
-        { '<leader>t', group = '[T]oggle' },
+        { '<leader>o', group = '[O]pen AI' },
+        { '<leader>g', group = '[G]it' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       },
     },
@@ -159,15 +161,15 @@ require('lazy').setup({
         builtin.live_grep { grep_open_files = true, prompt_title = 'Live Grep in Open Files' }
       end, { desc = '[S]earch in Open Files' })
 
-      vim.keymap.set('n', '<leader>sn', function() builtin.find_files { cwd = vim.fn.stdpath 'config' } end, { desc = '[S]earch [N]eovim files' })
+      vim.keymap.set('n', '<leader>sc', function() builtin.find_files { cwd = vim.fn.stdpath 'config' } end, { desc = '[S]earch [C]onfig files' })
     end,
   },
 
   {
     'neovim/nvim-lspconfig',
+    event = { 'BufReadPre', 'BufNewFile' },
     dependencies = {
       { 'mason-org/mason.nvim', opts = {} },
-      'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
       { 'j-hui/fidget.nvim', opts = {} },
       'saghen/blink.cmp',
@@ -215,9 +217,7 @@ require('lazy').setup({
 
       local capabilities = require('blink.cmp').get_lsp_capabilities()
 
-      local servers = {
-        copilot = {},
-      }
+      local servers = {}
 
       local ensure_installed = vim.tbl_keys(servers)
       vim.list_extend(ensure_installed, {
@@ -280,7 +280,7 @@ require('lazy').setup({
 
   {
     'saghen/blink.cmp',
-    event = 'VimEnter',
+    event = 'InsertEnter',
     version = '1.*',
     dependencies = {
       {
@@ -296,8 +296,8 @@ require('lazy').setup({
     opts = {
       keymap = { preset = 'default' },
       appearance = { nerd_font_variant = 'mono' },
-      completion = { documentation = { auto_show = false, auto_show_delay_ms = 500 } },
-      sources = { default = { 'lsp', 'path', 'snippets' } },
+      completion = { documentation = { auto_show = true, auto_show_delay_ms = 500 } },
+      sources = { default = { 'lsp', 'path', 'snippets', 'buffer' } },
       snippets = { preset = 'luasnip' },
       fuzzy = { implementation = 'lua' },
       signature = { enabled = true },
@@ -317,25 +317,73 @@ require('lazy').setup({
 
   {
     'nvim-mini/mini.nvim',
+    event = { 'BufReadPost', 'BufNewFile' },
     config = function()
       require('mini.ai').setup { n_lines = 500 }
       require('mini.surround').setup()
+      require('mini.pairs').setup()
     end,
   },
 
   {
     'nvim-treesitter/nvim-treesitter',
+    event = { 'BufReadPost', 'BufNewFile' },
     build = ':TSUpdate',
+    dependencies = { 'nvim-treesitter/nvim-treesitter-textobjects' },
     opts = {
       ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
       auto_install = true,
       highlight = { enable = true, additional_vim_regex_highlighting = { 'ruby' } },
       indent = { enable = true, disable = { 'ruby' } },
+      textobjects = {
+        select = {
+          enable = true,
+          lookahead = true,
+          keymaps = {
+            ['af'] = '@function.outer',
+            ['if'] = '@function.inner',
+            ['ac'] = '@class.outer',
+            ['ic'] = '@class.inner',
+            ['aa'] = '@parameter.outer',
+            ['ia'] = '@parameter.inner',
+          },
+        },
+        move = {
+          enable = true,
+          set_jumps = true,
+          goto_next_start = { [']f'] = '@function.outer', [']c'] = '@class.outer' },
+          goto_prev_start = { ['[f'] = '@function.outer', ['[c'] = '@class.outer' },
+        },
+      },
     },
     config = function(_, opts)
       local ok, configs = pcall(require, 'nvim-treesitter.configs')
       if ok then configs.setup(opts) end
     end,
+  },
+
+  {
+    'folke/flash.nvim',
+    keys = {
+      { 's', function() require('flash').jump() end, desc = 'Flash Jump', mode = { 'n', 'x', 'o' } },
+      { 'S', function() require('flash').treesitter() end, desc = 'Flash Treesitter', mode = { 'n', 'x', 'o' } },
+      { 'r', function() require('flash').remote() end, desc = 'Remote Flash', mode = 'o' },
+      { 'R', function() require('flash').treesitter_search() end, desc = 'Treesitter Search', mode = { 'o', 'x' } },
+    },
+    opts = {},
+  },
+
+  {
+    'NeogitOrg/neogit',
+    dependencies = { 'nvim-lua/plenary.nvim', 'sindrets/diffview.nvim' },
+    cmd = 'Neogit',
+    keys = {
+      { '<leader>gg', '<cmd>Neogit<cr>', desc = '[G]it Open' },
+      { '<leader>gc', '<cmd>Neogit commit<cr>', desc = '[G]it [C]ommit' },
+      { '<leader>gp', '<cmd>Neogit push<cr>', desc = '[G]it [P]ush' },
+      { '<leader>gl', '<cmd>Neogit pull<cr>', desc = '[G]it Pul[l]' },
+    },
+    opts = {},
   },
 
   { import = 'custom.plugins' },
