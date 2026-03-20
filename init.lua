@@ -37,7 +37,7 @@ vim.diagnostic.config {
   virtual_lines = false,
   jump = { float = true },
 }
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+vim.keymap.set('n', '<leader>qd', vim.diagnostic.setloclist, { desc = '[Q]uickfix [D]iagnostics' })
 
 -- Terminal
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
@@ -50,6 +50,7 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 
 -- Misc
 vim.keymap.set({ 'i', 'x', 'n', 's' }, '<C-s>', '<cmd>w<cr><esc>', { desc = 'Save File' })
+vim.keymap.set('n', '<leader>qq', '<cmd>qa<cr>', { desc = '[Q]uit all' })
 vim.keymap.set('n', '<leader>Q', '<cmd>qa<cr>', { desc = '[Q]uit all' })
 
 -- Autocmds
@@ -96,6 +97,7 @@ require('lazy').setup({
         { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
         { '<leader>o', group = '[O]pen AI' },
         { '<leader>g', group = '[G]it' },
+        { '<leader>q', group = '[Q]uit/Session' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       },
     },
@@ -317,11 +319,15 @@ require('lazy').setup({
 
   {
     'nvim-mini/mini.nvim',
-    event = { 'BufReadPost', 'BufNewFile' },
+    event = 'VimEnter',
     config = function()
       require('mini.ai').setup { n_lines = 500 }
       require('mini.surround').setup()
       require('mini.pairs').setup()
+      require('mini.sessions').setup { autowrite = true }
+
+      vim.keymap.set('n', '<leader>qs', function() MiniSessions.write() end, { desc = '[Q]uit [S]ession Save' })
+      vim.keymap.set('n', '<leader>qr', function() MiniSessions.select() end, { desc = '[Q]uit [R]estore Session' })
     end,
   },
 
